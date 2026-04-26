@@ -1,0 +1,9 @@
+// SPDX-License-Identifier: GPL-2.0+ OR MIT
+
+/ {
+	chosen {
+		bootargs = "earlycon=uart8250,mmio32,0xff1a0000 console=ttyS2,1500000n8 rw rootwait root=PARTUUID=${PARTUUID} rootfstype=squashfs overlayroot"
+			" cgroup_enable=memory swapaccount=1"
+			" ubi.mtd=ubifs ubi.block=0,ubi_rootfs root=ubi0:rootfs rootfstype=ubifs";
+	};
+};
