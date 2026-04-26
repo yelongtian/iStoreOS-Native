@@ -1,9 +1,11 @@
-// SPDX-License-Identifier: GPL-2.0+ OR MIT
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Copyright (C) 2019 Jagan Teki <jagan@amarulasolutions.com>
+ */
 
-/ {
-	chosen {
-		bootargs = "earlycon=uart8250,mmio32,0xff1a0000 console=ttyS2,1500000n8 rw rootwait root=PARTUUID=${PARTUUID} rootfstype=squashfs overlayroot"
-			" cgroup_enable=memory swapaccount=1"
-			" ubi.mtd=ubifs ubi.block=0,ubi_rootfs root=ubi0:rootfs rootfstype=ubifs";
-	};
+#include "rk3399-u-boot.dtsi"
+#include "rk3399-sdram-ddr3-1600.dtsi"
+
+&vdd_log {
+	regulator-init-microvolt = <950000>;
 };
