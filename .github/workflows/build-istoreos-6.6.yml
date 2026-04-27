@@ -4,7 +4,7 @@ on:
   repository_dispatch:
   workflow_dispatch:
   # schedule:
-   # - cron: 40 15 * * 3
+  # - cron: 40 15 * * 3
 
 env:
   REPO_URL: https://github.com/istoreos/istoreos
@@ -84,6 +84,15 @@ jobs:
         git clone $REPO_URL -b ${{ matrix.REPO_BRANCH }} openwrt
         ln -sf ${{ env.WORKDIR_PATH }}/workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
+    # ==============================================
+    # 🔧 自动修复 U‑Boot 2024.10 _config 不存在报错
+    # ==============================================
+    - name: 修复 U‑Boot 2024.10 编译错误
+      run: |
+        cd openwrt
+        sed -i 's/$(UBOOT_CONFIG)_config/$(UBOOT_CONFIG)_defconfig/g' include/u-boot.mk
+        echo "✅ U‑Boot 修复完成：_config → _defconfig"
+
     - name: 缓存构建动作
       uses: klever1988/cachewrtbuild@main
       with:
@@ -104,7 +113,6 @@ jobs:
       run: |
         cd openwrt
         ./scripts/feeds update -a
-        ./scripts/feeds install -a
         cp -a $GITHUB_WORKSPACE/configfiles/node-pnpm feeds/packages/lang/
         ./scripts/feeds update packages
         ./scripts/feeds install -a
@@ -128,19 +136,12 @@ jobs:
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
-    # ========== 已修复：解决 target/linux install 报错核心段 ==========
     - name: 编译固件
       id: compile
       run: |
         cd openwrt
-        # 清理内核残留缓存、解决安装阶段冲突
-        make target/linux/clean
-        rm -rf tmp build_dir staging_dir
-        # 重置配置
-        make defconfig
-        # RK平台强制单线程编译，彻底规避文件锁/并发冲突
-        echo "Single thread compile fix for rockchip"
-        make -j1 V=s
+        echo -e "$(nproc) thread compile"
+        make -j$(nproc) || make -j1 || make -j1 V=s
         echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
         echo "status=success" >> ${GITHUB_OUTPUT}
 
@@ -179,17 +180,14 @@ jobs:
         touch release.txt
         echo "
         🖥️ Architecture: rockchip-${{ matrix.ARCHITECTURE }}
-
         🔀 Branch: ${{ matrix.REPO_BRANCH }}
-
         📂 Source Code: ${{ env.REPO_URL }}
-
         🕒 Compilation Time: $(date +"%Y年%m月%d日%H时%M分") " >> release.txt
         echo "status=success" >> ${GITHUB_OUTPUT}
 
     - name: 自动发布固件到 Releases
       uses: softprops/action-gh-release@v2.2.1
-      if: steps.tag.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true' && !cancelled()
+      if: steps.tag.outputs.status == 'success' && !cancelled()
       with:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
@@ -201,7 +199,7 @@ jobs:
       with:
         retain_days: 1
         keep_minimum_runs: 1
-        token: ${{ env.GH_TOKEN }}
+        token: ${{ env.GITHUB_TOKEN }}
 
     - name: 删除自动发布的旧固件
       uses: dev-drprasad/delete-older-releases@master
