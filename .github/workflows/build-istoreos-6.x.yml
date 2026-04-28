@@ -123,6 +123,11 @@ jobs:
       run: |
         cd openwrt
         make defconfig
+        # 禁用 CONFIG_TARGET_ALL_PROFILES，确保只编译指定设备
+        sed -i '/CONFIG_TARGET_ALL_PROFILES/d' .config
+        echo "CONFIG_TARGET_ALL_PROFILES=n" >> .config
+        # 取消所有 rockchip_armv8 设备的选择
+        sed -i '/CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_/d' .config
         # 确保 rk3399-emb-3531 设备被选中
         echo "CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_rk3399_emb-3531=y" >> .config
         make defconfig
