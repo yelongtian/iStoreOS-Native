@@ -121,3 +121,6 @@ git_sparse_clone main https://github.com/Kwonelee/openwrt-packages luci-app-ramf
 FB_VERSION="$(curl -s https://github.com/filebrowser/filebrowser/tags | grep -Eo 'v[0-9]+\.[0-9]+\.[0-9]+' | head -n 1 | sed 's/^v//')"
 sed -i "s/2.54.0/$FB_VERSION/g" package/new/filebrowser/Makefile
 git clone --depth=1 -b master https://github.com/w9315273/luci-app-adguardhome package/new/luci-app-adguardhome
+
+# 确保 rk3399-emb-3531 设备被选中（解决云编译设备配置被覆盖问题）
+echo "CONFIG_TARGET_DEVICE_rockchip_armv8_DEVICE_rk3399_emb-3531=y" >> .config
